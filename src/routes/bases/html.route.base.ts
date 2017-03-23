@@ -1,0 +1,36 @@
+import { NextFunction, Request, Response } from "express";
+
+
+export class HtmlRouteBase {
+    protected title: string;
+
+    private scripts: string[];
+
+
+    constructor() {
+        //initialize variables
+        this.title = "Tour of Heros";
+        this.scripts = [];
+    }
+
+
+    public addScript(src: string): HtmlRouteBase {
+        this.scripts.push(src);
+        return this;
+    }
+
+
+    public render(req: Request, res: Response, view: string, options?: Object) {
+        //add constants
+        res.locals.BASE_URL = "/";
+
+        //add scripts
+        res.locals.scripts = this.scripts;
+
+        //add title
+        res.locals.title = this.title;
+
+        //render view
+        res.render(view, options);
+    }
+}
