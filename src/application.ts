@@ -9,8 +9,9 @@ import methodOverride = require("method-override");
 
 
 import {GenresRouter} from './routes/genres.api';
-import {IndexApi} from './routes/index.api'
+import {IndexApi} from './routes/index.api';
 
+import {IndexRoute} from './routes/index.route';
 
 export class Application {
 
@@ -84,7 +85,7 @@ export class Application {
         router = express.Router();
 
         //IndexRoute
-        IndexApi.create(router);
+        IndexRoute.create(router);
 
         //use router middleware
         this.app.use(router);
