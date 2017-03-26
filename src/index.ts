@@ -2,12 +2,17 @@ import * as http from 'http';
 import * as debug from 'debug';
 
 import {Application} from './application';
+import {IDbModel} from './interfaces/model';
+import { container } from "../inversify.config";
+import { TYPES } from "../src/types/TYPES";
+
 
 debug('ts-express:server');
 
 const port = normalizePort(process.env.PORT || 3000);
 
-let application = Application.current().app;
+var dbModel = container.get<IDbModel>(TYPES.IDbModel);
+let application = new Application(dbModel).app;
 
 application.set('port', port);
 

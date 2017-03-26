@@ -5,13 +5,27 @@ import * as logger from "morgan";
 import * as path from "path";
 import errorHandler = require("errorhandler");
 import methodOverride = require("method-override");
+import mongoose = require("mongoose");
 
-
-
-import {GenresRouter} from './routes/genres.api';
-import {IndexApi} from './routes/index.api';
 
 import {IndexRoute} from './routes/index.route';
+import {GenresApi} from './routes/genres.api';
+
+//interfaces
+import { IUser } from "./interfaces/user"; //import IUser
+import { IDbModel } from "./interfaces/model";
+import { IUserModel } from "./interfaces/user.model";
+
+import {DbModel} from './models/model'
+
+//schemas
+import { UserSchema } from "./schemas/user";
+import {IGenreModel} from "./interfaces/genre.model";
+import {GenreSchema} from "./schemas/genre"; //import userSchema
+
+import { inject } from "inversify";
+import {TYPES} from "./types/TYPES";
+
 
 export class Application {
 
@@ -19,8 +33,13 @@ export class Application {
 
     public app: express.Application;
 
+  //  private model: IApplicationModel;
+    private dbModel:IDbModel;
 
-    private constructor() {
+
+    public constructor(@inject(TYPES.IDbModel) dbModel: IDbModel) {
+
+        this.dbModel = dbModel;
 
         this.app = express();
 
@@ -31,11 +50,6 @@ export class Application {
         this.api();
     }
 
-    public static current():Application{
-        if(this.server == null)
-            this.server = new Application();
-        return this.server;
-    }
 
     public api() {
         //empty for now
@@ -44,30 +58,46 @@ export class Application {
 
     private config() {
         //add static paths
+        const MONGODB_CONNECTION: string = "mongodb://localhost:27017/mongodblearning";
+
+        //add static paths
         this.app.use(express.static(path.join(__dirname, "public")));
 
         //configure pug
         this.app.set("views", path.join(__dirname, "views"));
         this.app.set("view engine", "pug");
 
-        //use logger middlware
+        //mount logger
         this.app.use(logger("dev"));
 
-        //use json form parser middlware
+        //mount json form parser
         this.app.use(bodyParser.json());
 
-        //use query string parser middlware
+        //mount query string parser
         this.app.use(bodyParser.urlencoded({
             extended: true
         }));
 
-        //use cookie parker middleware middlware
+        //mount cookie parker
         this.app.use(cookieParser("SECRET_GOES_HERE"));
 
-        //use override middlware
+        //mount override
         this.app.use(methodOverride());
 
-        //catch 404 and forward to error handler
+        //use q promises
+        global.Promise = require("q").Promise;
+        mongoose.Promise = global.Promise;
+
+        //connect to mongoose
+        let connection: mongoose.Connection = mongoose.createConnection(MONGODB_CONNECTION);
+
+
+
+        //create models
+        this.dbModel.user = connection.model<IUserModel>("User", UserSchema);
+        this.dbModel.genre = connection.model<IGenreModel>("Genre", GenreSchema);
+
+        // catch 404 and forward to error handler
         this.app.use(function(err: any, req: express.Request, res: express.Response, next: express.NextFunction) {
             err.status = 404;
             next(err);
@@ -75,7 +105,6 @@ export class Application {
 
         //error handling
         this.app.use(errorHandler());
-
 
     }
 
@@ -87,6 +116,7 @@ export class Application {
         //IndexRoute
         IndexRoute.create(router);
 
+        new GenresApi().create(router, this.dbModel);
         //use router middleware
         this.app.use(router);
     }

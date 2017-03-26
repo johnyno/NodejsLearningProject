@@ -20,13 +20,13 @@ export class IndexApi extends ApiRouteBase {
     }
 
 
-    public index(req: Request, res: Response, next: NextFunction) {
+    private index(req: Request, res: Response, next: NextFunction) {
         //set custom title
        // this.title = "Home | Johnyno's first application";
 
         //set options
         let options: Object = {
-            "message": "Welcome to the Johnyno's first application"
+            "message": "Welcome to the Johnyno's first applicationn"
         };
 
         //render template

@@ -1,57 +1,79 @@
 import {Router, Request, Response, NextFunction} from 'express';
-import {GenreModel} from './../models/genre.model';
+import {DbModel} from './../models/model';
+import {ApiRouteBase} from "./bases/api.route.base";
+import "reflect-metadata";
+import { inject } from "inversify";
+import {IDbModel} from "../interfaces/model";
+import {TYPES} from "../types/TYPES";
 
 
-export class GenresRouter {
-  private router: Router
-  private model:GenreModel;
+export class GenresApi extends ApiRouteBase{
 
-  /**
-   * Initialize the HeroRouter
-   */
+
+  private dbModel:IDbModel;
+
   constructor() {
-    this.router = Router();
-    this.init();
-    this.model = new GenreModel();
-  }
-
-  private init() {
-    this.router.get('/genres', this.getAll);
-
-    this.router.get('/', (req, res, next) => {
-      res.json({
-        message: 'Hello World!'
-      })});
+   super();
   }
 
 
-  public getAll(req: Request, res: Response, next: NextFunction):void {
+  public create(router: Router, dbModel:IDbModel):void {
+
+      this.dbModel = dbModel;
+    //log
+    console.log("[GenresApi::create] Creating index route.");
+
+    //add home page route
+    router.get("/genres", (req: Request, res: Response, next: NextFunction) => {
+     this.index(req, res, next);
+    });
+  }
+
+
+  private index(req: Request, res: Response, next: NextFunction):void {
+    //set custom title
+    // this.title = "Home | Johnyno's first application";
+
     try{
-      let model = new GenreModel();
-      model.getGenres((err, genres) =>{
-                                              if(err){
-                                                throw err;
-                                              }
-                                              res.json(genres);
-                                            },
-                                  20);
-      }catch(e){
-         console.log("model error ");
 
-      }
+      this.getGenres((err, genres) =>{
+            if(err){
+              throw err;
+            }
+            res.json(genres);
+          },
+          20);
+
+
+    }catch(e){
+      console.log("model error ");
+
+    }
 
 
   }
 
-  /**
-   * Take each handler, and attach to one of the Express.Router's
-   * endpoints.
-   */
+    private getGenres(callback, limit):void{
+        this.dbModel.genre.find(callback).limit(limit);
+    }
 
-  public getRouter(){
-    return this.router;
-  }
+    private addGenre(callback, genre):void{
+        this.dbModel.genre.create(genre, callback);
+    }
+
+    private updateGenre(callback, id, genre, options):void{
+        const query = {_id:id};
+        const update = {
+            name: genre.name
+        }
+        this.dbModel.genre.findOneAndUpdate(query, update, options, callback);
+    }
+
+    private removeGenre(callback, id){
+        const query = {_id:id};
+        this.dbModel.genre.remove(query, callback);
+    }
 
 }
 
-export default GenresRouter;
+export default GenresApi;
